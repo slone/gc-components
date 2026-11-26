@@ -7,6 +7,7 @@ Composants web accessibles, sans framework ni dépendance à l'exécution : des 
 | Composant | npm | Démo |
 |---|---|---|
 | [`<gc-toggle-switch>`](packages/gc-toggle-switch/README.fr.md) | [`gc-toggle-switch`](https://www.npmjs.com/package/gc-toggle-switch) | [démo](https://slone.github.io/gc-components/gc-toggle-switch/?lang=fr) |
+| [`<gc-segmented-control>`](packages/gc-segmented-control/README.fr.md) | [`gc-segmented-control`](https://www.npmjs.com/package/gc-segmented-control) | [démo](https://slone.github.io/gc-components/gc-segmented-control/?lang=fr) |
 
 ```html
 <script type="module" src="https://cdn.jsdelivr.net/npm/gc-toggle-switch@1/gc-toggle-switch.js"></script>
@@ -22,6 +23,7 @@ packages/
     form-control.js     FormControlMixin : form, validité, setCustomValidity, fieldset disabled…
     test/fixtures.js    fixtures Playwright communes
   gc-toggle-switch/   un dossier par paquet publié
+  gc-segmented-control/
 custom-elements-manifest.config.mjs
 playwright.config.js
 tools/                pack (intégration de gc-base), publication, site, nouveau composant
