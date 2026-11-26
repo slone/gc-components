@@ -328,7 +328,7 @@ export class ToggleSwitch extends FormControlMixin(HTMLElement) {
   #drag = null;
   #internalClick = false;
   #suppressClickUntil = 0;
-  #userClickInTask = false;
+  #labelClick = null;
 
   constructor() {
     super();
@@ -476,15 +476,15 @@ export class ToggleSwitch extends FormControlMixin(HTMLElement) {
   }
 
   #onClick = (event) => {
-    // Firefox: clicking the switch inside a wrapping <label> makes the label
-    // dispatch a second click to the switch in the same task. Ignore it.
-    const forwarded = !this.#internalClick && this.#userClickInTask && this.labels.length > 0;
-    const swallowed = forwarded ||
-      (!this.#internalClick && performance.now() < this.#suppressClickUntil);
-    if (swallowed && !forwarded) this.#suppressClickUntil = 0;
-    if (!swallowed && !this.#internalClick && event.isTrusted) {
-      this.#userClickInTask = true;
-      setTimeout(() => { this.#userClickInTask = false; }, 0);
+    // Firefox: a click on a switch nested in a <label> reaches the label, whose
+    // activation behaviour sends a second click to the switch, which would toggle
+    // it straight back. Swallow that second click (same task as the first one).
+    const echo = this.#labelClick !== null && event !== this.#labelClick && !this.#internalClick;
+    const swallowed = echo || (!this.#internalClick && performance.now() < this.#suppressClickUntil);
+    if (swallowed && !echo) this.#suppressClickUntil = 0;
+    if (!swallowed && this.parentElement?.closest('label')) {
+      this.#labelClick = event;
+      setTimeout(() => { if (this.#labelClick === event) this.#labelClick = null; }, 0);
     }
     if (swallowed || !this.#isInteractive()) {
       event.preventDefault();

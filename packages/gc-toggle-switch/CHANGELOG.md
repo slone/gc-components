@@ -11,7 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
-- Firefox: clicking a switch placed inside its `<label>` toggled it twice (no visible change). The label's forwarded click is now ignored.
+- Firefox: clicking a switch nested in a `<label>` toggled it twice (so not at all), because the label sent the click to the switch again. That second click is now ignored.
 
 ### Changed
 
