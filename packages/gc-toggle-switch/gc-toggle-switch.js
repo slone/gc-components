@@ -328,6 +328,7 @@ export class ToggleSwitch extends FormControlMixin(HTMLElement) {
   #drag = null;
   #internalClick = false;
   #suppressClickUntil = 0;
+  #userClickInTask = false;
 
   constructor() {
     super();
@@ -475,8 +476,16 @@ export class ToggleSwitch extends FormControlMixin(HTMLElement) {
   }
 
   #onClick = (event) => {
-    const swallowed = !this.#internalClick && performance.now() < this.#suppressClickUntil;
-    if (swallowed) this.#suppressClickUntil = 0;
+    // Firefox: clicking the switch inside a wrapping <label> makes the label
+    // dispatch a second click to the switch in the same task. Ignore it.
+    const forwarded = !this.#internalClick && this.#userClickInTask && this.labels.length > 0;
+    const swallowed = forwarded ||
+      (!this.#internalClick && performance.now() < this.#suppressClickUntil);
+    if (swallowed && !forwarded) this.#suppressClickUntil = 0;
+    if (!swallowed && !this.#internalClick && event.isTrusted) {
+      this.#userClickInTask = true;
+      setTimeout(() => { this.#userClickInTask = false; }, 0);
+    }
     if (swallowed || !this.#isInteractive()) {
       event.preventDefault();
       event.stopImmediatePropagation();

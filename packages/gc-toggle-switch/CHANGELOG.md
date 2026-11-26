@@ -9,6 +9,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Static `ToggleSwitch.registerMessages(lang, { valueMissing })` to add or override the built-in validation message for a language.
 - Automated tests with Playwright in Chromium, Firefox and WebKit: form association, keyboard, pointer, events, ARIA through `ElementInternals`, and axe WCAG audits.
 
+### Fixed
+
+- Firefox: clicking a switch placed inside its `<label>` toggled it twice (no visible change). The label's forwarded click is now ignored.
+
 ### Changed
 
 - The component moved to the [gc-components](https://github.com/slone/gc-components) monorepo. The published files, their paths and the `exports` are unchanged; the recommended CDN URL is now `cdn.jsdelivr.net/npm/gc-toggle-switch@<version>/gc-toggle-switch.js`.
