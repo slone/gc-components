@@ -11,7 +11,7 @@
     "test:chromium": "playwright test --project=chromium",
     "test:ui": "playwright test --ui",
     "analyze": "npm run analyze --workspaces --if-present",
-    "check:generated": "npm run analyze && git diff --exit-code -- 'packages/*/custom-elements.json' 'packages/*/vscode.html-custom-data.json'",
+    "check:generated": "npm run analyze && node tools/check-clean.mjs",
     "new": "node tools/new-component.mjs"
   },
   "engines": {
