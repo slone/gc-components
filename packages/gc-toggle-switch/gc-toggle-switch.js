@@ -328,6 +328,7 @@ export class ToggleSwitch extends FormControlMixin(HTMLElement) {
   #drag = null;
   #internalClick = false;
   #suppressClickUntil = 0;
+  #labelClick = null;
 
   constructor() {
     super();
@@ -475,8 +476,18 @@ export class ToggleSwitch extends FormControlMixin(HTMLElement) {
   }
 
   #onClick = (event) => {
-    const swallowed = !this.#internalClick && performance.now() < this.#suppressClickUntil;
-    if (swallowed) this.#suppressClickUntil = 0;
+    // Firefox: a click on a switch nested in a <label> reaches the label, whose
+    // activation behaviour sends a second click to the switch, which would toggle
+    // it straight back. Swallow that second click (same task as the first one).
+    // It also follows our own click (keyboard, end of a drag), and is then sent
+    // while #internalClick is still set: do not exempt internal clicks here.
+    const echo = this.#labelClick !== null && event !== this.#labelClick;
+    const swallowed = echo || (!this.#internalClick && performance.now() < this.#suppressClickUntil);
+    if (swallowed && !echo) this.#suppressClickUntil = 0;
+    if (!swallowed && this.parentElement?.closest('label')) {
+      this.#labelClick = event;
+      setTimeout(() => { if (this.#labelClick === event) this.#labelClick = null; }, 0);
+    }
     if (swallowed || !this.#isInteractive()) {
       event.preventDefault();
       event.stopImmediatePropagation();

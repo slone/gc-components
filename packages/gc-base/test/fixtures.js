@@ -100,12 +100,15 @@ ${body}
   });
 }
 
-/** The ARIA state held by an element's ElementInternals (null when unset). */
+/** The ARIA state held by an element's ElementInternals (null when unset), and
+ *  which of the custom states used by gc-* components are set. */
 export function internals(locator) {
   return locator.evaluate((el) => {
     const i = window.__internalsOf(el);
     let states = [];
-    try { states = [...i.states]; } catch { /* CustomStateSet not supported */ }
+    // has() rather than iteration: WebKit does not reliably iterate CustomStateSet.
+    const KNOWN = ['checked', 'selected', 'disabled', 'busy', 'invalid'];
+    try { states = KNOWN.filter((s) => i.states.has(s)); } catch { /* CustomStateSet not supported */ }
     return {
       role: i.role,
       ariaChecked: i.ariaChecked,

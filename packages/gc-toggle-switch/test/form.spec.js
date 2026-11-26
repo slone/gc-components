@@ -225,4 +225,43 @@ test.describe('form association', () => {
     await page.locator('gc-toggle-switch').click();
     expect(await page.locator('gc-toggle-switch').evaluate((el) => el.checked)).toBe(false);
   });
+
+  test('a label that sends the click again does not toggle the switch back', async ({ page, mount }) => {
+    // What Firefox's label activation does for a click on the switch itself.
+    await mount(`<label><span>Bluetooth</span> <gc-toggle-switch></gc-toggle-switch></label>`);
+    await page.locator('label').evaluate((label) => {
+      let echoing = false;
+      label.addEventListener('click', (e) => {
+        if (echoing || e.target.localName !== 'gc-toggle-switch') return;
+        // dispatchEvent(), not click(): click() does nothing while a click is in progress.
+        echoing = true;
+        try {
+          e.target.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true, cancelable: true }));
+        } finally {
+          echoing = false;
+        }
+      });
+    });
+    const sw = page.locator('gc-toggle-switch');
+    await sw.click();
+    expect(await sw.evaluate((el) => el.checked)).toBe(true);
+    await sw.click();
+    expect(await sw.evaluate((el) => el.checked)).toBe(false);
+    // Keyboard activation goes through a click too.
+    await sw.focus();
+    await page.keyboard.press(' ');
+    expect(await sw.evaluate((el) => el.checked)).toBe(true);
+    await page.keyboard.press('Enter');
+    expect(await sw.evaluate((el) => el.checked)).toBe(false);
+  });
+
+  test('the keyboard toggles a switch in a wrapping <label> once', async ({ page, mount }) => {
+    await mount(`<label><span>Bluetooth</span> <gc-toggle-switch></gc-toggle-switch></label>`);
+    const sw = page.locator('gc-toggle-switch');
+    await sw.focus();
+    await page.keyboard.press(' ');
+    expect(await sw.evaluate((el) => el.checked)).toBe(true);
+    await page.keyboard.press('Enter');
+    expect(await sw.evaluate((el) => el.checked)).toBe(false);
+  });
 });
