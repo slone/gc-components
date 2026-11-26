@@ -7,6 +7,7 @@ Accessible web components with no framework or runtime dependency: native, form-
 | Component | npm | Demo |
 |---|---|---|
 | [`<gc-toggle-switch>`](packages/gc-toggle-switch#readme) | [`gc-toggle-switch`](https://www.npmjs.com/package/gc-toggle-switch) | [demo](https://slone.github.io/gc-components/gc-toggle-switch/) |
+| [`<gc-segmented-control>`](packages/gc-segmented-control#readme) | [`gc-segmented-control`](https://www.npmjs.com/package/gc-segmented-control) | [demo](https://slone.github.io/gc-components/gc-segmented-control/) |
 
 ```html
 <script type="module" src="https://cdn.jsdelivr.net/npm/gc-toggle-switch@1/gc-toggle-switch.js"></script>
@@ -22,6 +23,7 @@ packages/
     form-control.js     FormControlMixin: form, validity, setCustomValidity, fieldset disabled…
     test/fixtures.js    shared Playwright fixtures
   gc-toggle-switch/   one folder per published package
+  gc-segmented-control/
 custom-elements-manifest.config.mjs
 playwright.config.js
 tools/                pack (inline gc-base), release, site, new component

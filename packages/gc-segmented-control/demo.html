@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>&lt;gc-segmented-control&gt; — demo</title>
+  <script type="module" src="./gc-segmented-control.js"></script>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: light-dark(#ffffff, #16181d);
+      --fg: light-dark(#1b1d22, #e6e8ec);
+      --muted: light-dark(#5a606b, #a3a9b5);
+      --card: light-dark(#f5f6f8, #1f2229);
+      --border: light-dark(#d9dce2, #343842);
+      --code: light-dark(#eceef2, #2a2e37);
+      font-family: system-ui, sans-serif;
+      line-height: 1.5;
+    }
+    :root[data-theme="light"] { color-scheme: light; }
+    :root[data-theme="dark"] { color-scheme: dark; }
+    body { margin: 0; background: var(--bg); color: var(--fg); }
+    main { max-width: 60rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+    header { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; justify-content: space-between; }
+    h1 { font-size: 1.6rem; margin: 0; }
+    h2 { font-size: 1.15rem; margin: 0 0 .75rem; }
+    p.lead { color: var(--muted); margin: .25rem 0 1.5rem; }
+    code { background: var(--code); padding: .05em .35em; border-radius: .25em; font-size: .9em; }
+    section { background: var(--card); border: 1px solid var(--border); border-radius: .75rem; padding: 1rem 1.25rem; margin-block: 1rem; }
+    .row { display: flex; flex-wrap: wrap; gap: 1.25rem 2rem; align-items: center; }
+    .item { display: flex; flex-direction: column; align-items: flex-start; gap: .4rem; }
+    .note { color: var(--muted); font-size: .9rem; margin: .75rem 0 0; }
+    fieldset { border: 1px solid var(--border); border-radius: .5rem; padding: .75rem 1rem; margin: 0; }
+    legend { padding: 0 .35rem; }
+    form .grid { display: grid; grid-template-columns: max-content auto; gap: .75rem 1rem; align-items: center; }
+    button { font: inherit; padding: .4rem .9rem; border-radius: .4rem; border: 1px solid var(--border); background: var(--bg); color: var(--fg); cursor: pointer; }
+    button:focus-visible { outline: 2px solid light-dark(#0b57d0, #a8c7fa); outline-offset: 2px; }
+    pre { background: var(--code); padding: .75rem; border-radius: .5rem; overflow: auto; margin: .75rem 0 0; min-height: 1.5em; }
+    #log { max-height: 10rem; }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; font-size: .9rem; }
+    .toolbar label { color: var(--muted); }
+    svg.icon { width: 1.15em; height: 1.15em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+
+    /* CSS-driven variants */
+    .big { font-size: 1.35rem; }
+    .small { font-size: .8rem; }
+    .full { display: block; }
+    .neutral {
+      /* iOS-like: neutral indicator. Bold text keeps the selection readable without colour. */
+      --segmented-indicator-color: light-dark(#ffffff, #636366);
+      --segmented-selected-color: currentColor;
+      --segmented-indicator-shadow: 0 1px 3px rgb(0 0 0 / .2), 0 0 0 .5px rgb(0 0 0 / .1);
+      --segmented-border: none;
+      --segmented-background: light-dark(rgb(118 118 128 / .14), rgb(118 118 128 / .3));
+    }
+    .neutral gc-segment[selected] { font-weight: 600; }
+    .brand {
+      --segmented-indicator-color: light-dark(#1a7f37, #2ea043);
+      --segmented-selected-color: light-dark(#fff, #04260f);
+      --segmented-radius: 999px;
+    }
+    .square { --segmented-radius: 0; --segmented-padding: 0; --segmented-gap: 0; }
+    .underline::part(track) { background: none; border: none; border-bottom: 1px solid var(--border); border-radius: 0; }
+    .underline::part(indicator) { background: none; box-shadow: inset 0 -3px 0 light-dark(#0b57d0, #a8c7fa); border-radius: 0; }
+    .underline { --segmented-selected-color: currentColor; }
+
+    /* Reserves the space before the module loads (see README). */
+    gc-segmented-control:not(:defined) {
+      display: inline-flex;
+      gap: 0.125em;
+      padding: 0.1875em;
+      border: 1px solid #b9bcc4;
+      border-radius: 0.5em;
+      vertical-align: middle;
+      opacity: 0.5;
+    }
+    gc-segmented-control[orientation="vertical" i]:not(:defined) { flex-direction: column; }
+    gc-segment:not(:defined) { display: block; padding: 0.375em 0.875em; text-align: center; white-space: nowrap; }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1><code>&lt;gc-segmented-control&gt;</code></h1>
+    <div class="toolbar">
+      <gc-segmented-control id="langPicker" class="small" data-i18n-label="langGroup" aria-label="Language">
+        <gc-segment value="en" lang="en">English</gc-segment>
+        <gc-segment value="fr" lang="fr">Français</gc-segment>
+      </gc-segmented-control>
+      <gc-segmented-control id="themePicker" class="small" value="" data-i18n-label="themeGroup" aria-label="Page theme">
+        <gc-segment value="" data-i18n="themeSystem">System</gc-segment>
+        <gc-segment value="light" data-i18n="themeLight">Light</gc-segment>
+        <gc-segment value="dark" data-i18n="themeDark">Dark</gc-segment>
+      </gc-segmented-control>
+    </div>
+  </header>
+  <p class="lead" data-i18n="lead">An accessible, form-associated segmented control built as a native Custom Element.</p>
+
+  <section>
+    <h2 data-i18n="hTitle">Horizontal (default)</h2>
+    <div class="row">
+      <div class="item">
+        <label for="view" data-i18n="viewLabel">View (<code>&lt;label for&gt;</code>)</label>
+        <gc-segmented-control id="view" value="list">
+          <gc-segment value="list" data-i18n="list">List</gc-segment>
+          <gc-segment value="grid" data-i18n="grid">Grid</gc-segment>
+          <gc-segment value="map" data-i18n="map">Map</gc-segment>
+        </gc-segmented-control>
+      </div>
+      <div class="item">
+        <span id="periodLabel" data-i18n="period">Period (<code>aria-labelledby</code>, no default)</span>
+        <gc-segmented-control id="period" aria-labelledby="periodLabel">
+          <gc-segment value="day" data-i18n="day">Day</gc-segment>
+          <gc-segment value="week" data-i18n="week">Week</gc-segment>
+          <gc-segment value="month" data-i18n="month">Month</gc-segment>
+          <gc-segment value="year" data-i18n="year">Year</gc-segment>
+        </gc-segmented-control>
+      </div>
+    </div>
+    <p class="note" data-i18n="keysNote">Click, or Tab in and use the arrow keys (Home / End jump to the ends). Selection follows focus, as with native radio buttons.</p>
+  </section>
+
+  <section>
+    <h2 data-i18n="iTitle">Icons</h2>
+    <div class="row">
+      <div class="item">
+        <span data-i18n="iconsText">Icon + text</span>
+        <gc-segmented-control id="align" value="left" data-i18n-label="alignment" aria-label="Alignment">
+          <gc-segment value="left"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h10M4 18h13"/></svg><span data-i18n="left">Left</span></gc-segment>
+          <gc-segment value="center"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M5.5 18h13"/></svg><span data-i18n="center">Center</span></gc-segment>
+          <gc-segment value="right"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M10 12h10M7 18h13"/></svg><span data-i18n="right">Right</span></gc-segment>
+        </gc-segmented-control>
+      </div>
+      <div class="item">
+        <span data-i18n="iconsOnly">Icons only (<code>aria-label</code> on each segment)</span>
+        <gc-segmented-control id="layout" value="rows" data-i18n-label="layout" aria-label="Layout">
+          <gc-segment value="rows" data-i18n-label="rows" aria-label="Rows"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></gc-segment>
+          <gc-segment value="tiles" data-i18n-label="tiles" aria-label="Tiles"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="4" width="7" height="7" rx="1"/><rect x="4" y="13" width="7" height="7" rx="1"/><rect x="13" y="13" width="7" height="7" rx="1"/></svg></gc-segment>
+          <gc-segment value="columns" data-i18n-label="columns" aria-label="Columns"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="4.5" height="16" rx="1"/><rect x="10" y="4" width="4.5" height="16" rx="1"/><rect x="16" y="4" width="4" height="16" rx="1"/></svg></gc-segment>
+        </gc-segmented-control>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 data-i18n="vTitle">Vertical</h2>
+    <div class="row">
+      <gc-segmented-control orientation="vertical" value="normal" data-i18n-label="speed" aria-label="Speed">
+        <gc-segment value="slow" data-i18n="slow">Slow</gc-segment>
+        <gc-segment value="normal" data-i18n="normal">Normal</gc-segment>
+        <gc-segment value="fast" data-i18n="fast">Fast</gc-segment>
+      </gc-segmented-control>
+      <gc-segmented-control orientation="vertical" value="md" class="neutral" aria-label="Size">
+        <gc-segment value="sm">S</gc-segment>
+        <gc-segment value="md">M</gc-segment>
+        <gc-segment value="lg">L</gc-segment>
+        <gc-segment value="xl">XL</gc-segment>
+      </gc-segmented-control>
+    </div>
+  </section>
+
+  <section>
+    <h2 data-i18n="cTitle">Sizes, colours and parts</h2>
+    <div class="row">
+      <div class="item"><span data-i18n="neutral">Neutral, iOS style (CSS properties)</span>
+        <gc-segmented-control class="neutral" value="b" aria-label="Neutral">
+          <gc-segment value="a">Alpha</gc-segment><gc-segment value="b">Beta</gc-segment><gc-segment value="c">Gamma</gc-segment>
+        </gc-segmented-control>
+      </div>
+      <div class="item"><span data-i18n="brand">Brand colour, pill</span>
+        <gc-segmented-control class="brand" value="a" aria-label="Brand">
+          <gc-segment value="a">Alpha</gc-segment><gc-segment value="b">Beta</gc-segment><gc-segment value="c">Gamma</gc-segment>
+        </gc-segmented-control>
+      </div>
+      <div class="item"><span data-i18n="square">Square, no padding</span>
+        <gc-segmented-control class="square" value="a" aria-label="Square">
+          <gc-segment value="a">Alpha</gc-segment><gc-segment value="b">Beta</gc-segment><gc-segment value="c">Gamma</gc-segment>
+        </gc-segmented-control>
+      </div>
+      <div class="item"><span data-i18n="underline">Underline (<code>::part()</code>)</span>
+        <gc-segmented-control class="underline" value="a" aria-label="Underline">
+          <gc-segment value="a">Alpha</gc-segment><gc-segment value="b">Beta</gc-segment><gc-segment value="c">Gamma</gc-segment>
+        </gc-segmented-control>
+      </div>
+      <div class="item"><span data-i18n="big">Large (font-size)</span>
+        <gc-segmented-control class="big" value="a" aria-label="Large">
+          <gc-segment value="a">Alpha</gc-segment><gc-segment value="b">Beta</gc-segment>
+        </gc-segmented-control>
+      </div>
+      <div class="item"><span data-i18n="small">Small</span>
+        <gc-segmented-control class="small" value="a" aria-label="Small">
+          <gc-segment value="a">Alpha</gc-segment><gc-segment value="b">Beta</gc-segment>
+        </gc-segmented-control>
+      </div>
+    </div>
+    <div class="item" style="margin-top:1rem"><span data-i18n="full">Full width (<code>display: block</code>)</span></div>
+    <gc-segmented-control class="full" value="b" aria-label="Full width">
+      <gc-segment value="a">Alpha</gc-segment><gc-segment value="b">Beta</gc-segment><gc-segment value="c">Gamma</gc-segment>
+    </gc-segmented-control>
+  </section>
+
+  <section dir="rtl" lang="ar">
+    <h2 data-i18n="rTitle" lang="en" dir="ltr" style="text-align:start">Right-to-left (<code>dir="rtl"</code>)</h2>
+    <gc-segmented-control value="1" aria-label="RTL">
+      <gc-segment value="1">واحد</gc-segment>
+      <gc-segment value="2">اثنان</gc-segment>
+      <gc-segment value="3">ثلاثة</gc-segment>
+    </gc-segmented-control>
+    <p class="note" data-i18n="rNote" lang="en" dir="ltr" style="text-align:start">In RTL, the segments run from right to left and the Left / Right arrows follow the visual order.</p>
+  </section>
+
+  <section>
+    <h2 data-i18n="dTitle">Disabled</h2>
+    <div class="row">
+      <div class="item"><span data-i18n="d1">Whole control (<code>disabled</code>)</span>
+        <gc-segmented-control disabled value="a" aria-label="Disabled">
+          <gc-segment value="a">Alpha</gc-segment><gc-segment value="b">Beta</gc-segment>
+        </gc-segmented-control>
+      </div>
+      <div class="item"><span data-i18n="d2">One segment (skipped by the arrows)</span>
+        <gc-segmented-control value="a" aria-label="One disabled">
+          <gc-segment value="a">Alpha</gc-segment><gc-segment value="b" disabled>Beta</gc-segment><gc-segment value="c">Gamma</gc-segment>
+        </gc-segmented-control>
+      </div>
+      <fieldset id="fs">
+        <legend data-i18n="fsLegend">Fieldset</legend>
+        <gc-segmented-control value="a" aria-label="Fieldset">
+          <gc-segment value="a">Alpha</gc-segment><gc-segment value="b">Beta</gc-segment>
+        </gc-segmented-control>
+      </fieldset>
+      <label><input type="checkbox" id="fsToggle"> <span data-i18n="fsToggle">Disable the fieldset</span></label>
+    </div>
+  </section>
+
+  <section>
+    <h2 data-i18n="fTitle">In a form</h2>
+    <form id="form">
+      <div class="grid">
+        <label for="f-size" data-i18n="f1">Size (<code>name="size"</code>, default <code>m</code>)</label>
+        <gc-segmented-control id="f-size" name="size" value="m">
+          <gc-segment value="s">S</gc-segment><gc-segment value="m">M</gc-segment><gc-segment value="l">L</gc-segment>
+        </gc-segmented-control>
+        <label for="f-ship" data-i18n="f2">Shipping (<code>required</code>, no default)</label>
+        <gc-segmented-control id="f-ship" name="shipping" required>
+          <gc-segment value="standard" data-i18n="standard">Standard</gc-segment>
+          <gc-segment value="express" data-i18n="express">Express</gc-segment>
+          <gc-segment value="pickup" data-i18n="pickup">Pick-up</gc-segment>
+        </gc-segmented-control>
+        <label for="f-text" data-i18n="f3">Value = text (no <code>value</code> attribute)</label>
+        <gc-segmented-control id="f-text" name="answer">
+          <gc-segment selected>Yes</gc-segment><gc-segment>No</gc-segment><gc-segment>Maybe</gc-segment>
+        </gc-segmented-control>
+      </div>
+      <p class="row" style="gap:.5rem; margin:1rem 0 0">
+        <button type="submit" data-i18n="submit">Submit</button>
+        <button type="reset" data-i18n="reset">Reset</button>
+      </p>
+      <p class="note" data-i18n="sent">Submitted data (FormData):</p>
+      <pre id="formOut">—</pre>
+    </form>
+  </section>
+
+  <section>
+    <h2 data-i18n="logTitle">Event log</h2>
+    <pre id="log" aria-live="polite"></pre>
+  </section>
+</main>
+
+<script type="module">
+  import './gc-segmented-control.js';
+
+  // ---- Translations --------------------------------------------------------
+  const I18N = {
+    en: {
+      title: '<gc-segmented-control> — demo',
+      langGroup: 'Language', themeGroup: 'Page theme',
+      themeSystem: 'System', themeLight: 'Light', themeDark: 'Dark',
+      lead: 'An accessible, form-associated segmented control built as a native Custom Element.',
+      hTitle: 'Horizontal (default)', viewLabel: 'View (<code>&lt;label for&gt;</code>)',
+      list: 'List', grid: 'Grid', map: 'Map',
+      period: 'Period (<code>aria-labelledby</code>, no default)', day: 'Day', week: 'Week', month: 'Month', year: 'Year',
+      keysNote: 'Click, or Tab in and use the arrow keys (Home / End jump to the ends). Selection follows focus, as with native radio buttons.',
+      iTitle: 'Icons', iconsText: 'Icon + text', alignment: 'Alignment', left: 'Left', center: 'Center', right: 'Right',
+      iconsOnly: 'Icons only (<code>aria-label</code> on each segment)', layout: 'Layout', rows: 'Rows', tiles: 'Tiles', columns: 'Columns',
+      vTitle: 'Vertical', speed: 'Speed', slow: 'Slow', normal: 'Normal', fast: 'Fast',
+      cTitle: 'Sizes, colours and parts', neutral: 'Neutral, iOS style (CSS properties)', brand: 'Brand colour, pill',
+      square: 'Square, no padding', underline: 'Underline (<code>::part()</code>)', big: 'Large (font-size)', small: 'Small',
+      full: 'Full width (<code>display: block</code>)',
+      rTitle: 'Right-to-left (<code>dir="rtl"</code>)',
+      rNote: 'In RTL, the segments run from right to left and the Left / Right arrows follow the visual order.',
+      dTitle: 'Disabled', d1: 'Whole control (<code>disabled</code>)', d2: 'One segment (skipped by the arrows)',
+      fsLegend: 'Fieldset', fsToggle: 'Disable the fieldset',
+      fTitle: 'In a form', f1: 'Size (<code>name="size"</code>, default <code>m</code>)',
+      f2: 'Shipping (<code>required</code>, no default)', standard: 'Standard', express: 'Express', pickup: 'Pick-up',
+      f3: 'Value = text (no <code>value</code> attribute)',
+      submit: 'Submit', reset: 'Reset', sent: 'Submitted data (FormData):', noData: '(no data)', wasReset: '— (form reset)',
+      logTitle: 'Event log',
+    },
+    fr: {
+      title: '<gc-segmented-control> — démonstration',
+      langGroup: 'Langue', themeGroup: 'Thème de la page',
+      themeSystem: 'Système', themeLight: 'Clair', themeDark: 'Sombre',
+      lead: 'Contrôle segmenté (« segmented control ») : Custom Element natif, accessible, associé aux formulaires.',
+      hTitle: 'Horizontal (par défaut)', viewLabel: 'Affichage (<code>&lt;label for&gt;</code>)',
+      list: 'Liste', grid: 'Grille', map: 'Carte',
+      period: 'Période (<code>aria-labelledby</code>, sans valeur par défaut)', day: 'Jour', week: 'Semaine', month: 'Mois', year: 'Année',
+      keysNote: 'Cliquez, ou entrez avec Tab puis utilisez les flèches (Début / Fin vont aux extrémités). La sélection suit le focus, comme pour des boutons radio natifs.',
+      iTitle: 'Icônes', iconsText: 'Icône + texte', alignment: 'Alignement', left: 'Gauche', center: 'Centre', right: 'Droite',
+      iconsOnly: 'Icônes seules (<code>aria-label</code> sur chaque segment)', layout: 'Disposition', rows: 'Lignes', tiles: 'Tuiles', columns: 'Colonnes',
+      vTitle: 'Vertical', speed: 'Vitesse', slow: 'Lente', normal: 'Normale', fast: 'Rapide',
+      cTitle: 'Tailles, couleurs et parts', neutral: 'Neutre, style iOS (propriétés CSS)', brand: 'Couleur de marque, pilule',
+      square: 'Carré, sans marge', underline: 'Soulignement (<code>::part()</code>)', big: 'Grand (font-size)', small: 'Petit',
+      full: 'Pleine largeur (<code>display: block</code>)',
+      rTitle: 'Droite à gauche (<code>dir="rtl"</code>)',
+      rNote: 'En RTL, les segments vont de droite à gauche et les flèches Gauche / Droite suivent l\'ordre visuel.',
+      dTitle: 'Désactivé', d1: 'Tout le contrôle (<code>disabled</code>)', d2: 'Un segment (sauté par les flèches)',
+      fsLegend: 'Fieldset', fsToggle: 'Désactiver le fieldset',
+      fTitle: 'Dans un formulaire', f1: 'Taille (<code>name="size"</code>, défaut <code>m</code>)',
+      f2: 'Livraison (<code>required</code>, sans défaut)', standard: 'Standard', express: 'Express', pickup: 'Retrait',
+      f3: 'Valeur = texte (sans attribut <code>value</code>)',
+      submit: 'Envoyer', reset: 'Réinitialiser', sent: 'Données envoyées (FormData) :', noData: '(aucune donnée)', wasReset: '— (formulaire réinitialisé)',
+      logTitle: 'Journal des événements',
+    },
+  };
+
+  let lang = 'en';
+  const t = (key) => I18N[lang][key] ?? I18N.en[key] ?? key;
+  const langPicker = document.getElementById('langPicker');
+
+  function readLang() {
+    const fromUrl = new URLSearchParams(location.search).get('lang');
+    if (fromUrl in I18N) return fromUrl;
+    try { const saved = localStorage.getItem('gc-segmented-control-demo-lang'); if (saved in I18N) return saved; } catch {}
+    return (navigator.language || '').toLowerCase().startsWith('fr') ? 'fr' : 'en';
+  }
+
+  function applyLang(next) {
+    lang = next;
+    document.documentElement.lang = lang; // also switches the "required" validation message
+    document.title = t('title');
+    // Translations are static strings from this file (trusted), some with <code> markup.
+    for (const el of document.querySelectorAll('[data-i18n]')) el.innerHTML = t(el.dataset.i18n);
+    for (const el of document.querySelectorAll('[data-i18n-label]')) el.setAttribute('aria-label', t(el.dataset.i18nLabel));
+    langPicker.value = lang;
+    try { localStorage.setItem('gc-segmented-control-demo-lang', lang); } catch {}
+  }
+  langPicker.addEventListener('change', () => applyLang(langPicker.value));
+  applyLang(readLang());
+
+  // ---- Theme ---------------------------------------------------------------
+  const themePicker = document.getElementById('themePicker');
+  themePicker.addEventListener('change', () => {
+    const theme = themePicker.value;
+    if (theme) document.documentElement.dataset.theme = theme;
+    else delete document.documentElement.dataset.theme;
+  });
+
+  // ---- Event log -----------------------------------------------------------
+  const log = document.getElementById('log');
+  const describe = (el) => el.id || el.getAttribute('aria-label') || el.name || 'gc-segmented-control';
+  document.addEventListener('change', (e) => {
+    if (e.target.localName !== 'gc-segmented-control') return;
+    log.textContent = `change  ${describe(e.target)} → ${JSON.stringify(e.target.value)}\n` + log.textContent;
+  });
+
+  // ---- Fieldset ------------------------------------------------------------
+  document.getElementById('fsToggle').addEventListener('change', (e) => {
+    document.getElementById('fs').disabled = e.target.checked;
+  });
+
+  // ---- Form ----------------------------------------------------------------
+  const form = document.getElementById('form');
+  const out = document.getElementById('formOut');
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const entries = [...new FormData(form)].map(([k, v]) => `${k}=${v}`);
+    out.textContent = entries.length ? entries.join('\n') : t('noData');
+  });
+  form.addEventListener('reset', () => { out.textContent = t('wasReset'); });
+</script>
+</body>
+</html>

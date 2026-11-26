@@ -1,0 +1,500 @@
+{
+  "schemaVersion": "1.0.0",
+  "readme": "",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "gc-segmented-control.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "One option of a <gc-segmented-control>. Must be a direct child of the control.",
+          "name": "Segment",
+          "slots": [
+            {
+              "description": "The segment's content: text, icon, or both.",
+              "name": ""
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "value",
+              "description": "The value submitted when this segment is selected: the `value` attribute, or else the text content.",
+              "type": {
+                "text": "string"
+              },
+              "attribute": "value"
+            },
+            {
+              "kind": "field",
+              "name": "selected",
+              "description": "Selecting a segment deselects the others. Fires no event.",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "reflects": true,
+              "attribute": "selected"
+            },
+            {
+              "kind": "field",
+              "name": "disabled",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "reflects": true,
+              "attribute": "disabled"
+            },
+            {
+              "kind": "field",
+              "name": "control",
+              "description": "The <gc-segmented-control> this segment belongs to (its parent), if any.",
+              "type": {
+                "text": "SegmentedControl | null"
+              },
+              "readonly": true
+            }
+          ],
+          "attributes": [
+            {
+              "name": "selected",
+              "type": {
+                "text": "boolean"
+              },
+              "description": "Reflected selection state. Selecting one segment deselects the others.",
+              "fieldName": "selected",
+              "default": "false"
+            },
+            {
+              "name": "disabled",
+              "type": {
+                "text": "boolean"
+              },
+              "description": "The segment cannot be selected and is skipped by the arrow keys.",
+              "fieldName": "disabled",
+              "default": "false"
+            },
+            {
+              "name": "value",
+              "type": {
+                "text": "string"
+              },
+              "description": "Value submitted when selected. Defaults to the text content.",
+              "fieldName": "value"
+            }
+          ],
+          "cssStates": [
+            {
+              "description": "The segment is selected.",
+              "name": "selected"
+            },
+            {
+              "description": "The segment, or its whole control, is disabled.",
+              "name": "disabled"
+            }
+          ],
+          "superclass": {
+            "name": "HTMLElement",
+            "package": "global:"
+          },
+          "tagName": "gc-segment",
+          "customElement": true,
+          "summary": "An option of a segmented control (role \"radio\")."
+        },
+        {
+          "kind": "class",
+          "description": "An accessible, form-associated segmented control (role \"radiogroup\").",
+          "name": "SegmentedControl",
+          "cssProperties": [
+            {
+              "description": "Track background.",
+              "name": "--segmented-background"
+            },
+            {
+              "description": "Track border (shorthand).",
+              "name": "--segmented-border"
+            },
+            {
+              "description": "Text colour of the segments.",
+              "name": "--segmented-color"
+            },
+            {
+              "description": "Text colour of the selected segment.",
+              "name": "--segmented-selected-color"
+            },
+            {
+              "description": "Background of the selection indicator.",
+              "name": "--segmented-indicator-color"
+            },
+            {
+              "description": "Shadow of the selection indicator.",
+              "name": "--segmented-indicator-shadow"
+            },
+            {
+              "description": "Background of a hovered segment.",
+              "name": "--segmented-hover-color"
+            },
+            {
+              "description": "Outer corner radius.",
+              "name": "--segmented-radius",
+              "default": "0.5em"
+            },
+            {
+              "description": "Gap between the track edge and the segments.",
+              "name": "--segmented-padding",
+              "default": "0.1875em"
+            },
+            {
+              "description": "Gap between two segments.",
+              "name": "--segmented-gap",
+              "default": "0.125em"
+            },
+            {
+              "description": "Inner padding of each segment.",
+              "name": "--segmented-segment-padding",
+              "default": "0.375em 0.875em"
+            },
+            {
+              "description": "Focus ring colour.",
+              "name": "--segmented-focus-color"
+            },
+            {
+              "description": "Animation duration.",
+              "name": "--segmented-duration",
+              "default": "200ms"
+            }
+          ],
+          "cssParts": [
+            {
+              "description": "The container: background, border, grid of segments.",
+              "name": "track"
+            },
+            {
+              "description": "The sliding selection indicator.",
+              "name": "indicator"
+            }
+          ],
+          "slots": [
+            {
+              "description": "The <gc-segment> options.",
+              "name": ""
+            }
+          ],
+          "members": [
+            {
+              "kind": "method",
+              "name": "registerMessages",
+              "static": true,
+              "parameters": [
+                {
+                  "name": "lang",
+                  "type": {
+                    "text": "string"
+                  }
+                },
+                {
+                  "name": "entries",
+                  "type": {
+                    "text": "{ valueMissing?: string }"
+                  }
+                }
+              ],
+              "description": "Adds or overrides the built-in messages for a language, e.g.\n`SegmentedControl.registerMessages('de', { valueMissing: 'Bitte wählen Sie eine Option.' })`.\nThe language comes from the closest `lang` attribute, else the browser."
+            },
+            {
+              "kind": "field",
+              "name": "value",
+              "description": "Value of the selected segment, or \"\" when none is selected. Setting it fires no event.",
+              "type": {
+                "text": "string"
+              },
+              "attribute": "value"
+            },
+            {
+              "kind": "field",
+              "name": "defaultValue",
+              "description": "Value restored by form.reset().",
+              "type": {
+                "text": "string"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "segments",
+              "description": "The <gc-segment> children, in order.",
+              "type": {
+                "text": "Segment[]"
+              },
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "selectedSegment",
+              "description": "The selected <gc-segment>, or null.",
+              "type": {
+                "text": "Segment | null"
+              },
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "selectedIndex",
+              "description": "Index of the selected segment among `segments`, or -1. Setting it fires no event.",
+              "type": {
+                "text": "number"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "orientation",
+              "type": {
+                "text": "'horizontal' | 'vertical'"
+              },
+              "default": "'horizontal'",
+              "reflects": true,
+              "attribute": "orientation"
+            },
+            {
+              "kind": "field",
+              "name": "type",
+              "type": {
+                "text": "'gc-segmented-control'"
+              },
+              "readonly": true
+            },
+            {
+              "kind": "method",
+              "name": "focus",
+              "parameters": [
+                {
+                  "name": "options"
+                }
+              ],
+              "description": "Focuses the selected segment (or the first enabled one), as the Tab key would."
+            },
+            {
+              "kind": "field",
+              "name": "formAssociated",
+              "type": {
+                "text": "boolean"
+              },
+              "static": true,
+              "default": "true"
+            },
+            {
+              "kind": "field",
+              "name": "disabled",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "reflects": true,
+              "attribute": "disabled"
+            },
+            {
+              "kind": "field",
+              "name": "required",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "reflects": true,
+              "attribute": "required"
+            },
+            {
+              "kind": "field",
+              "name": "name",
+              "type": {
+                "text": "string"
+              },
+              "default": "\"\"",
+              "reflects": true,
+              "attribute": "name"
+            },
+            {
+              "kind": "field",
+              "name": "form",
+              "type": {
+                "text": "HTMLFormElement | null"
+              },
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "labels",
+              "type": {
+                "text": "NodeList"
+              },
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "validity",
+              "type": {
+                "text": "ValidityState"
+              },
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "validationMessage",
+              "type": {
+                "text": "string"
+              },
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "willValidate",
+              "type": {
+                "text": "boolean"
+              },
+              "readonly": true
+            },
+            {
+              "kind": "method",
+              "name": "checkValidity",
+              "return": {
+                "type": {
+                  "text": "boolean"
+                }
+              }
+            },
+            {
+              "kind": "method",
+              "name": "reportValidity",
+              "return": {
+                "type": {
+                  "text": "boolean"
+                }
+              }
+            },
+            {
+              "kind": "method",
+              "name": "setCustomValidity",
+              "parameters": [
+                {
+                  "name": "message",
+                  "description": "An empty string clears the custom error.",
+                  "type": {
+                    "text": "string"
+                  }
+                }
+              ],
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              }
+            }
+          ],
+          "events": [
+            {
+              "name": "input",
+              "type": {
+                "text": "Event"
+              },
+              "description": "The user selected another segment. Bubbles and is composed."
+            },
+            {
+              "name": "change",
+              "type": {
+                "text": "Event"
+              },
+              "description": "Right after input. Bubbles."
+            }
+          ],
+          "attributes": [
+            {
+              "name": "value",
+              "type": {
+                "text": "string"
+              },
+              "description": "Value of the selected segment. Also sets the default value used by form.reset().",
+              "fieldName": "value"
+            },
+            {
+              "name": "disabled",
+              "type": {
+                "text": "boolean"
+              },
+              "description": "Disables the whole control.",
+              "fieldName": "disabled",
+              "default": "false"
+            },
+            {
+              "name": "required",
+              "type": {
+                "text": "boolean"
+              },
+              "description": "The form is invalid while no segment is selected.",
+              "fieldName": "required",
+              "default": "false"
+            },
+            {
+              "name": "orientation",
+              "type": {
+                "text": "'horizontal' | 'vertical'"
+              },
+              "description": "Layout direction. Defaults to horizontal.",
+              "fieldName": "orientation",
+              "default": "'horizontal'"
+            },
+            {
+              "type": {
+                "text": "string"
+              },
+              "description": "Field name in the form.",
+              "name": "name",
+              "fieldName": "name",
+              "default": "\"\""
+            }
+          ],
+          "superclass": {
+            "name": "HTMLElement",
+            "package": "global:"
+          },
+          "tagName": "gc-segmented-control",
+          "customElement": true,
+          "summary": "A row of mutually exclusive options, submitted with forms."
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "Segment",
+          "declaration": {
+            "name": "Segment",
+            "module": "gc-segmented-control.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "SegmentedControl",
+          "declaration": {
+            "name": "SegmentedControl",
+            "module": "gc-segmented-control.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "gc-segment",
+          "declaration": {
+            "name": "Segment",
+            "module": "gc-segmented-control.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "gc-segmented-control",
+          "declaration": {
+            "name": "SegmentedControl",
+            "module": "gc-segmented-control.js"
+          }
+        }
+      ]
+    }
+  ]
+}

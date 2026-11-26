@@ -1,0 +1,73 @@
+{
+  "version": 1.1,
+  "tags": [
+    {
+      "name": "gc-segment",
+      "description": "One option of a <gc-segmented-control>. Must be a direct child of the control.",
+      "attributes": [
+        {
+          "name": "selected",
+          "description": "Reflected selection state. Selecting one segment deselects the others.",
+          "valueSet": "v"
+        },
+        {
+          "name": "disabled",
+          "description": "The segment cannot be selected and is skipped by the arrow keys.",
+          "valueSet": "v"
+        },
+        {
+          "name": "value",
+          "description": "Value submitted when selected. Defaults to the text content."
+        }
+      ],
+      "references": [
+        {
+          "name": "Documentation",
+          "url": "https://github.com/slone/gc-components/tree/main/packages/gc-segmented-control#readme"
+        }
+      ]
+    },
+    {
+      "name": "gc-segmented-control",
+      "description": "An accessible, form-associated segmented control (role \"radiogroup\").",
+      "attributes": [
+        {
+          "name": "value",
+          "description": "Value of the selected segment. Also sets the default value used by form.reset()."
+        },
+        {
+          "name": "disabled",
+          "description": "Disables the whole control.",
+          "valueSet": "v"
+        },
+        {
+          "name": "required",
+          "description": "The form is invalid while no segment is selected.",
+          "valueSet": "v"
+        },
+        {
+          "name": "orientation",
+          "description": "Layout direction. Defaults to horizontal.",
+          "values": [
+            {
+              "name": "horizontal"
+            },
+            {
+              "name": "vertical"
+            }
+          ]
+        },
+        {
+          "name": "name",
+          "description": "Field name in the form."
+        }
+      ],
+      "references": [
+        {
+          "name": "Documentation",
+          "url": "https://github.com/slone/gc-components/tree/main/packages/gc-segmented-control#readme"
+        }
+      ]
+    }
+  ]
+}
