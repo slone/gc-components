@@ -22,6 +22,11 @@
     "vscode.html-custom-data.json",
     "README.fr.md"
   ],
+  "scripts": {
+    "analyze": "cem analyze --config ../../custom-elements-manifest.config.mjs",
+    "prepack": "npm run analyze && node ../../tools/pack.mjs prepack",
+    "postpack": "node ../../tools/pack.mjs postpack"
+  },
   "keywords": [
     "web-component",
     "custom-element",

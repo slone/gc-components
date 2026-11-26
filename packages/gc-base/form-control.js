@@ -65,25 +65,44 @@ export function FormControlMixin(Base) {
       this[sync]();
     }
 
+    /** @type {boolean}
+     * @default false
+     * @reflect */
     get disabled() { return this.hasAttribute('disabled'); }
     set disabled(v) { this.toggleAttribute('disabled', Boolean(v)); }
 
+    /** @type {boolean}
+     * @default false
+     * @reflect */
     get required() { return this.hasAttribute('required'); }
     set required(v) { this.toggleAttribute('required', Boolean(v)); }
 
+    /** @type {string}
+     * @default ""
+     * @reflect */
     get name() { return this.getAttribute('name') ?? ''; }
     set name(v) { this.setAttribute('name', v); }
 
+    /** @type {HTMLFormElement | null} */
     get form() { return this[internals].form; }
+    /** @type {NodeList} */
     get labels() { return this[internals].labels; }
+    /** @type {ValidityState} */
     get validity() { return this[internals].validity; }
+    /** @type {string} */
     get validationMessage() { this[sync](); return this[internals].validationMessage; }
+    /** @type {boolean} */
     get willValidate() { return this[internals].willValidate; }
 
     // The built-in message follows the current page language: refresh it before validating.
+    /** @returns {boolean} */
     checkValidity() { this[sync](); return this[internals].checkValidity(); }
+    /** @returns {boolean} */
     reportValidity() { this[sync](); return this[internals].reportValidity(); }
-    /** @param {string} message An empty string clears the custom error. */
+    /**
+     * @param {string} message An empty string clears the custom error.
+     * @returns {void}
+     */
     setCustomValidity(message) {
       this.#customValidity = String(message ?? '');
       this[sync]();

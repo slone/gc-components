@@ -16,3 +16,4 @@ node_modules/
 # Tests
 test-results/
 playwright-report/
+*.source

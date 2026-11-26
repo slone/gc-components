@@ -257,6 +257,50 @@ const messages = createMessages({
   fr: { valueMissing: 'Veuillez activer cet interrupteur.' },
 });
 
+/**
+ * An on/off switch, horizontal or vertical, usable with a pointer (click or drag) and the keyboard (Space, Enter).
+ *
+ * @tag gc-toggle-switch
+ * @summary Accessible, form-associated toggle switch.
+ *
+ * @attr {boolean} checked - The "on" state (reflected). Also sets the default state used by form.reset().
+ * @attr {boolean} disabled - Disables the switch and excludes it from the form.
+ * @attr {boolean} busy - Shows a spinner, exposes aria-busy and ignores user actions.
+ * @attr {boolean} required - The form is invalid while the switch is off.
+ * @attr {string} name - Field name in the form.
+ * @attr {string} value - Value submitted when the switch is on.
+ * @attr {'horizontal' | 'vertical'} orientation - Orientation. Wins over --switch-vertical; horizontal when neither is set.
+ * @attr {string} off-color - Track colour when off (any CSS colour). Wins over --switch-off-color.
+ * @attr {string} on-color - Track colour when on (any CSS colour). Wins over --switch-on-color.
+ * @attr {boolean} state-labels - Shows I / O state indicators in the track.
+ *
+ * @fires {Event} input - The user toggled the switch. Bubbles and is composed.
+ * @fires {Event} change - Fired right after input. Bubbles.
+ * @fires {CustomEvent<{ oldChecked: boolean; newChecked: boolean }>} toggle - Fired right after change, with the old and new states. Does not bubble.
+ *
+ * @slot on - Indicator shown when on (short text or icon).
+ * @slot off - Indicator shown when off (short text or icon).
+ *
+ * @csspart track - The track (rounded background).
+ * @csspart thumb - The round thumb.
+ * @csspart on-label - The indicator shown when on.
+ * @csspart off-label - The indicator shown when off.
+ *
+ * @cssprop [--switch-off-color=light-dark(#767676, #8e8e93)] - Track colour when off.
+ * @cssprop [--switch-on-color=light-dark(#1a7f37, #2ea043)] - Track colour when on.
+ * @cssprop [--switch-thumb-color=#ffffff] - Thumb colour.
+ * @cssprop [--switch-thumb-shadow=0 1px 3px rgb(0 0 0 / 0.35), 0 0 0 0.5px rgb(0 0 0 / 0.08)] - Thumb shadow.
+ * @cssprop [--switch-thumb-size=1.25em] - Thumb diameter.
+ * @cssprop [--switch-padding=0.1875em] - Gap between the thumb and the track edge.
+ * @cssprop [--switch-length=1.65 × the track width] - Track length (long side).
+ * @cssprop [--switch-focus-color=light-dark(#0b57d0, #a8c7fa)] - Focus ring colour.
+ * @cssprop [--switch-label-color=#ffffff] - State indicator colour.
+ * @cssprop [--switch-halo-color=light-dark(rgb(0 0 0 / 0.1), rgb(255 255 255 / 0.18))] - Halo around the thumb on hover and press.
+ * @cssprop [--switch-duration=180ms] - Animation duration.
+ * @cssprop [--switch-vertical=0] - 0 = horizontal, 1 = vertical. The orientation attribute wins.
+ *
+ * @cssstate checked - The switch is on.
+ */
 export class ToggleSwitch extends FormControlMixin(HTMLElement) {
   static observedAttributes = [
     'checked', 'disabled', 'required', 'value', 'busy', 'off-color', 'on-color', 'state-labels',
@@ -353,18 +397,35 @@ export class ToggleSwitch extends FormControlMixin(HTMLElement) {
 
   // ---- Properties -----------------------------------------------------------
 
+  /** Current state. Setting it fires no event.
+   * @type {boolean}
+   * @default false
+   * @reflect */
   get checked() { return this.#checked; }
   set checked(v) { this.#setChecked(Boolean(v)); }
 
+  /** State restored by form.reset().
+   * @type {boolean}
+   * @default false */
   get defaultChecked() { return this.#defaultChecked; }
   set defaultChecked(v) { this.#defaultChecked = Boolean(v); }
 
+  /** @type {boolean}
+   * @default false
+   * @reflect */
   get busy() { return this.hasAttribute('busy'); }
   set busy(v) { this.toggleAttribute('busy', Boolean(v)); }
 
+  /** @type {string}
+   * @default "on"
+   * @reflect */
   get value() { return this.getAttribute('value') ?? 'on'; }
   set value(v) { this.setAttribute('value', v); }
 
+  /** Orientation set by the attribute; an orientation set in CSS is not visible here.
+   * @type {'horizontal' | 'vertical'}
+   * @default "horizontal"
+   * @reflect */
   get orientation() {
     return (this.getAttribute('orientation') || '').toLowerCase() === 'vertical' ? 'vertical' : 'horizontal';
   }
@@ -373,12 +434,20 @@ export class ToggleSwitch extends FormControlMixin(HTMLElement) {
     else this.setAttribute('orientation', v);
   }
 
+  /** @type {boolean}
+   * @default false
+   * @reflect */
   get stateLabels() { return this.hasAttribute('state-labels'); }
   set stateLabels(v) { this.toggleAttribute('state-labels', Boolean(v)); }
 
+  /** @type {'gc-toggle-switch'} */
   get type() { return 'gc-toggle-switch'; }
 
-  /** Toggles the state (or forces it when `force` is a boolean). Fires no event. */
+  /**
+   * Toggles the state, or sets it when force is a boolean. Fires no event.
+   * @param {boolean} [force]
+   * @returns {boolean} - The new state.
+   */
   toggle(force) {
     this.checked = typeof force === 'boolean' ? force : !this.#checked;
     return this.#checked;

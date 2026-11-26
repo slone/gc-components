@@ -9,7 +9,10 @@
   "scripts": {
     "test": "playwright test",
     "test:chromium": "playwright test --project=chromium",
-    "test:ui": "playwright test --ui"
+    "test:ui": "playwright test --ui",
+    "analyze": "npm run analyze --workspaces --if-present",
+    "check:generated": "npm run analyze && git diff --exit-code -- 'packages/*/custom-elements.json' 'packages/*/vscode.html-custom-data.json'",
+    "new": "node tools/new-component.mjs"
   },
   "engines": {
     "node": ">=22"
@@ -17,6 +20,8 @@
   "license": "MIT",
   "devDependencies": {
     "@axe-core/playwright": "^4.14.1",
-    "@playwright/test": "^1.65.1"
+    "@custom-elements-manifest/analyzer": "^0.11.0",
+    "@playwright/test": "^1.65.1",
+    "rollup": "^4.68.8"
   }
 }
