@@ -153,6 +153,21 @@ test.describe('form association', () => {
       .toBe('Please turn this switch on.');
   });
 
+  test('regional languages fall back to their base language, and languages can be added', async ({ page, mount }) => {
+    await mount(`<form><gc-toggle-switch aria-label="A" required></gc-toggle-switch></form>`, { lang: 'fr-CA' });
+    const sw = page.locator('gc-toggle-switch');
+    expect(await sw.evaluate((el) => el.validationMessage)).toBe('Veuillez activer cet interrupteur.');
+
+    await page.evaluate(() => {
+      customElements.get('gc-toggle-switch').registerMessages('de', { valueMissing: 'Bitte einschalten.' });
+      document.documentElement.setAttribute('lang', 'de-AT');
+    });
+    expect(await sw.evaluate((el) => el.validationMessage)).toBe('Bitte einschalten.');
+
+    await page.evaluate(() => document.documentElement.setAttribute('lang', 'it'));
+    expect(await sw.evaluate((el) => el.validationMessage)).toBe('Please turn this switch on.');
+  });
+
   test('setCustomValidity() sets and clears a custom error', async ({ page, mount }) => {
     await mount(`<form><gc-toggle-switch aria-label="A" checked></gc-toggle-switch></form>`);
     const sw = page.locator('gc-toggle-switch');

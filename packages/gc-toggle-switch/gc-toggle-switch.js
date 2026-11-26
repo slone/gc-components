@@ -10,6 +10,10 @@
  * See README.md for the full documentation.
  */
 
+import { FormControlMixin, internals, sync, isDisabled, applyValidity } from '../gc-base/form-control.js';
+import { upgradeProperties, setState } from '../gc-base/attributes.js';
+import { createMessages } from '../gc-base/messages.js';
+
 const STYLES = /* css */ `
 :host {
   /* ---- Public API (can be overridden from the page) ----
@@ -248,35 +252,41 @@ const DRAG_THRESHOLD = 4;
 /** After a drag, the browser may still send a click: ignore it for this long (ms). */
 const CLICK_SUPPRESS_MS = 400;
 
-function defaultValueMissingMessage(el) {
-  const lang = (el.closest('[lang]')?.getAttribute('lang') || navigator.language || '').toLowerCase();
-  return lang.startsWith('fr') ? 'Veuillez activer cet interrupteur.' : 'Please turn this switch on.';
-}
+const messages = createMessages({
+  en: { valueMissing: 'Please turn this switch on.' },
+  fr: { valueMissing: 'Veuillez activer cet interrupteur.' },
+});
 
-export class ToggleSwitch extends HTMLElement {
-  static formAssociated = true;
+export class ToggleSwitch extends FormControlMixin(HTMLElement) {
   static observedAttributes = [
     'checked', 'disabled', 'required', 'value', 'busy', 'off-color', 'on-color', 'state-labels',
   ];
 
-  #internals;
+  /**
+   * Adds or overrides the built-in messages for a language, e.g.
+   * `ToggleSwitch.registerMessages('de', { valueMissing: 'Bitte einschalten.' })`.
+   * The language comes from the closest `lang` attribute, else the browser.
+   * @param {string} lang
+   * @param {{ valueMissing?: string }} entries
+   */
+  static registerMessages(lang, entries) {
+    messages.register(lang, entries);
+  }
+
   #track;
   #thumb;
   #attrSheet;
   #checked = false;
   #defaultChecked = false;
   #reflecting = false;
-  #formDisabled = false;
   #managedTabindex = false;
   #spacePressed = false;
-  #customValidity = '';
   #drag = null;
   #internalClick = false;
   #suppressClickUntil = 0;
 
   constructor() {
     super();
-    this.#internals = this.attachInternals();
     const root = this.attachShadow({ mode: 'open' });
     this.#attrSheet = new CSSStyleSheet();
     root.adoptedStyleSheets = [getSheet(), this.#attrSheet];
@@ -293,7 +303,7 @@ export class ToggleSwitch extends HTMLElement {
       slot.addEventListener('slotchange', () => this.#updateLabels());
     }
 
-    this.#internals.role = 'switch';
+    this[internals].role = 'switch';
 
     this.addEventListener('click', this.#onClick);
     this.addEventListener('keydown', this.#onKeyDown);
@@ -302,9 +312,6 @@ export class ToggleSwitch extends HTMLElement {
       this.#spacePressed = false;
       this.#track.classList.remove('pressed');
     });
-    // Form submission validates without calling our methods: refresh the message
-    // when the browser reports this element as invalid.
-    this.addEventListener('invalid', () => this.#sync());
     this.addEventListener('pointerdown', this.#onPointerDown);
     this.addEventListener('pointermove', this.#onPointerMove);
     this.addEventListener('pointerup', this.#onPointerUp);
@@ -312,16 +319,9 @@ export class ToggleSwitch extends HTMLElement {
   }
 
   connectedCallback() {
-    // Properties set before the element was defined (upgrade).
-    for (const prop of ['checked', 'defaultChecked', 'disabled', 'required', 'name', 'value', 'orientation', 'stateLabels', 'busy']) {
-      if (Object.prototype.hasOwnProperty.call(this, prop)) {
-        const v = this[prop];
-        delete this[prop];
-        this[prop] = v;
-      }
-    }
+    upgradeProperties(this, ['checked', 'defaultChecked', 'disabled', 'required', 'name', 'value', 'orientation', 'stateLabels', 'busy']);
     this.#updateLabels();
-    this.#sync();
+    this[sync]();
   }
 
   attributeChangedCallback(name, _old, value) {
@@ -338,15 +338,10 @@ export class ToggleSwitch extends HTMLElement {
       this.#updateLabels();
       return;
     }
-    this.#sync();
+    this[sync]();
   }
 
   // ---- Forms ----------------------------------------------------------------
-
-  formDisabledCallback(disabled) {
-    this.#formDisabled = disabled;
-    this.#sync();
-  }
 
   formResetCallback() {
     this.#setChecked(this.#defaultChecked);
@@ -364,17 +359,8 @@ export class ToggleSwitch extends HTMLElement {
   get defaultChecked() { return this.#defaultChecked; }
   set defaultChecked(v) { this.#defaultChecked = Boolean(v); }
 
-  get disabled() { return this.hasAttribute('disabled'); }
-  set disabled(v) { this.toggleAttribute('disabled', Boolean(v)); }
-
-  get required() { return this.hasAttribute('required'); }
-  set required(v) { this.toggleAttribute('required', Boolean(v)); }
-
   get busy() { return this.hasAttribute('busy'); }
   set busy(v) { this.toggleAttribute('busy', Boolean(v)); }
-
-  get name() { return this.getAttribute('name') ?? ''; }
-  set name(v) { this.setAttribute('name', v); }
 
   get value() { return this.getAttribute('value') ?? 'on'; }
   set value(v) { this.setAttribute('value', v); }
@@ -391,19 +377,6 @@ export class ToggleSwitch extends HTMLElement {
   set stateLabels(v) { this.toggleAttribute('state-labels', Boolean(v)); }
 
   get type() { return 'gc-toggle-switch'; }
-  get form() { return this.#internals.form; }
-  get labels() { return this.#internals.labels; }
-  get validity() { return this.#internals.validity; }
-  get validationMessage() { this.#sync(); return this.#internals.validationMessage; }
-  get willValidate() { return this.#internals.willValidate; }
-
-  // The built-in message follows the current page language: refresh it before validating.
-  checkValidity() { this.#sync(); return this.#internals.checkValidity(); }
-  reportValidity() { this.#sync(); return this.#internals.reportValidity(); }
-  setCustomValidity(message) {
-    this.#customValidity = String(message ?? '');
-    this.#sync();
-  }
 
   /** Toggles the state (or forces it when `force` is a boolean). Fires no event. */
   toggle(force) {
@@ -413,13 +386,9 @@ export class ToggleSwitch extends HTMLElement {
 
   // ---- Internals ------------------------------------------------------------
 
-  #isDisabled() {
-    return this.hasAttribute('disabled') || this.#formDisabled;
-  }
-
   /** The user can change the state: neither disabled nor busy. */
   #isInteractive() {
-    return !this.#isDisabled() && !this.hasAttribute('busy');
+    return !this[isDisabled]() && !this.hasAttribute('busy');
   }
 
   #setChecked(v) {
@@ -427,7 +396,7 @@ export class ToggleSwitch extends HTMLElement {
     this.#reflecting = true;
     this.toggleAttribute('checked', v);
     this.#reflecting = false;
-    this.#sync();
+    this[sync]();
   }
 
   /** Dispatches a click from the component itself (keyboard, end of a drag). */
@@ -567,30 +536,19 @@ export class ToggleSwitch extends HTMLElement {
     this.#attrSheet.replaceSync(decls.length ? `:host { ${decls.join(' ')} }` : '');
   }
 
-  #sync() {
-    const internals = this.#internals;
+  [sync]() {
+    const i = this[internals];
     const checked = this.#checked;
-    const disabled = this.#isDisabled();
+    const disabled = this[isDisabled]();
 
-    internals.ariaChecked = String(checked);
-    internals.ariaDisabled = disabled ? 'true' : null;
-    internals.ariaRequired = this.required ? 'true' : null;
-    internals.ariaBusy = this.busy ? 'true' : null;
+    i.ariaChecked = String(checked);
+    i.ariaDisabled = disabled ? 'true' : null;
+    i.ariaRequired = this.required ? 'true' : null;
+    i.ariaBusy = this.busy ? 'true' : null;
+    setState(i, 'checked', checked);
 
-    try {
-      if (checked) internals.states.add('checked');
-      else internals.states.delete('checked');
-    } catch { /* CustomStateSet not supported */ }
-
-    internals.setFormValue(checked ? this.value : null, String(checked));
-
-    if (this.#customValidity) {
-      internals.setValidity({ customError: true }, this.#customValidity, this.#track);
-    } else if (this.required && !checked) {
-      internals.setValidity({ valueMissing: true }, defaultValueMissingMessage(this), this.#track);
-    } else {
-      internals.setValidity({});
-    }
+    i.setFormValue(checked ? this.value : null, String(checked));
+    this[applyValidity](this.required && !checked, messages.get(this, 'valueMissing'), this.#track);
 
     if (!this.isConnected) return;
     if (disabled) {
