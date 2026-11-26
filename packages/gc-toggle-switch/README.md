@@ -6,9 +6,9 @@ A reusable toggle switch: a native Custom Element (the `gc-` prefix avoids name 
 
 ![Preview of the demo page: horizontal, vertical and coloured switches, with state indicators](docs/preview.jpg)
 
-**Live demo:** <https://slone.github.io/gc-toggle-switch/> (source: [`demo.html`](demo.html), in English and French).
+**Live demo:** <https://slone.github.io/gc-components/gc-toggle-switch/> (source: [`demo.html`](demo.html), in English and French).
 
-**Repository:** <https://github.com/slone/gc-toggle-switch>
+**Repository:** <https://github.com/slone/gc-components> (folder `packages/gc-toggle-switch`). Up to 1.4.1 the component lived in [slone/gc-toggle-switch](https://github.com/slone/gc-toggle-switch), which is kept read-only so that existing links keep working.
 
 ## What this control is called
 
@@ -33,7 +33,7 @@ npm install gc-toggle-switch
 import 'gc-toggle-switch';
 ```
 
-Without a bundler, there is nothing to build. Copy `gc-toggle-switch.js` into your project and import it as an ES module:
+Without a bundler, there is nothing to build. Copy `gc-toggle-switch.js` from the npm package (or from the jsDelivr link below) into your project and import it as an ES module. It is a single self-contained file:
 
 ```html
 <script type="module" src="./gc-toggle-switch.js"></script>
@@ -47,11 +47,13 @@ import { ToggleSwitch } from './gc-toggle-switch.js';
 
 The `<gc-toggle-switch>` element is defined automatically, only once even if the file is imported several times.
 
-The file is also available from the jsDelivr CDN. Pin a version (git tag) in production:
+The file is also available from the jsDelivr CDN. Pin a version in production:
 
 ```html
-<script type="module" src="https://cdn.jsdelivr.net/gh/slone/gc-toggle-switch@v1.4.1/gc-toggle-switch.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/gc-toggle-switch@1.4.1/gc-toggle-switch.js"></script>
 ```
+
+Use the `npm/` URL above rather than a `gh/` URL to the repository: in the repository, `gc-toggle-switch.js` imports the shared `gc-base` helpers, which are inlined only into the published file. The old `gh/slone/gc-toggle-switch@v1.x.y/…` URLs keep working.
 
 > ES modules do not load from `file://`. Serve the page over HTTP, for example with `python -m http.server` in this folder, then open `http://localhost:8000/demo.html`.
 
@@ -110,6 +112,7 @@ Invalid colours given as attributes are ignored: the colour then falls back to t
 | `form`, `labels`, `validity`, `validationMessage`, `willValidate` | As for a native field. |
 | `checkValidity()`, `reportValidity()`, `setCustomValidity(msg)` | Validation, as for a native field. |
 | `toggle(force?)` | Toggles the state, or sets it when `force` is a boolean. Returns the new state. |
+| `ToggleSwitch.registerMessages(lang, { valueMissing })` | Static. Adds or overrides the built-in validation message for a language, e.g. `registerMessages('de', { valueMissing: 'Bitte einschalten.' })`. English and French are built in; a regional language (`fr-CA`) falls back to its base language, then to English. |
 
 As with native fields, a change made by script (`checked = …`, `toggle()`) **fires no event**.
 
@@ -315,26 +318,18 @@ The component relies on modern browsers: Custom Elements, Shadow DOM, `ElementIn
 
 ## Files
 
-- `gc-toggle-switch.js`: the component (standalone ES module). It is the only file to copy into a project.
+- `gc-toggle-switch.js`: the component (ES module). In the published package it is self-contained and is the only file to copy into a project; in the repository it imports `../gc-base/`.
 - `demo.html`: demo of every variant, in English and French (language switcher, or `?lang=en` / `?lang=fr` in the URL).
-- `index.html`: redirects to the demo (handy for GitHub Pages).
-- `gc-toggle-switch.d.ts`, `custom-elements.json`, `vscode.html-custom-data.json`: types and editor metadata (optional).
+- `index.html`: redirects to the demo.
+- `gc-toggle-switch.d.ts`: TypeScript types. `custom-elements.json`, `vscode.html-custom-data.json`: editor metadata, generated from the JSDoc of `gc-toggle-switch.js` (`npm run analyze`).
 - `docs/preview.jpg`: screenshot used in the READMEs.
 - `README.md` (this document), `README.fr.md` (French), `CHANGELOG.md`.
-- `package.json`: npm metadata (ES module, types, licence).
+- `package.json`: npm metadata (ES module, types, licence) and pack scripts.
+- `test/`: automated tests (not published to npm).
 
 ## Development
 
-No build step. To run the demo locally:
-
-```sh
-python -m http.server 8000
-# or: npx http-server -p 8000
-```
-
-then open <http://localhost:8000/demo.html>.
-
-To publish the demo with GitHub Pages: *Settings → Pages → Deploy from a branch*, branch `main`, folder `/ (root)`.
+The component is developed in the [gc-components](https://github.com/slone/gc-components) monorepo: see its README for the demos, the tests (Playwright in Chromium, Firefox and WebKit, with axe WCAG audits) and the release process.
 
 ## License
 

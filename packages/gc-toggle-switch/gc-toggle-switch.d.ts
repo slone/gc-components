@@ -19,6 +19,13 @@ export declare class ToggleSwitch extends HTMLElement {
   static readonly formAssociated: true;
   static readonly observedAttributes: string[];
 
+  /**
+   * Adds or overrides the built-in validation message for a language
+   * (English and French are built in). The language comes from the closest
+   * `lang` attribute, else the browser; `fr-CA` falls back to `fr`, then `en`.
+   */
+  static registerMessages(lang: string, messages: { valueMissing?: string }): void;
+
   /** Current state, reflected to the `checked` attribute. Setting it fires no event. */
   get checked(): boolean;
   set checked(value: boolean);

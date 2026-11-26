@@ -1,0 +1,67 @@
+name: Release
+
+# Pushing a tag <package>@<version> (e.g. gc-toggle-switch@1.5.0) publishes
+# that package to npm with provenance, then creates a GitHub Release.
+# Authentication: npm trusted publishing (OIDC), set up once per package on
+# npmjs.com for the repository slone/gc-components and this workflow file.
+on:
+  push:
+    tags: ['gc-*@*']
+
+permissions:
+  contents: read
+
+jobs:
+  info:
+    name: Read the tag
+    runs-on: ubuntu-latest
+    outputs:
+      package: ${{ steps.info.outputs.package }}
+      version: ${{ steps.info.outputs.version }}
+      dist-tag: ${{ steps.info.outputs.dist-tag }}
+      published: ${{ steps.info.outputs.published }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # Fails when the tag does not match packages/<package>/package.json.
+      - id: info
+        run: node tools/release.mjs info "$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"
+
+  ci:
+    needs: info
+    if: needs.info.outputs.published == 'false'
+    uses: ./.github/workflows/ci.yml
+
+  publish:
+    name: Publish ${{ needs.info.outputs.package }}@${{ needs.info.outputs.version }}
+    needs: [info, ci]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # GitHub Release
+      id-token: write   # npm trusted publishing and provenance
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+          cache: npm
+      # Trusted publishing needs npm 11.5.1 or later.
+      - run: npm install -g npm@11
+      - run: npm ci
+      - run: npm publish -w "packages/$PACKAGE" --provenance --access public --tag "$DIST_TAG"
+        env:
+          PACKAGE: ${{ needs.info.outputs.package }}
+          DIST_TAG: ${{ needs.info.outputs.dist-tag }}
+      - name: GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PACKAGE: ${{ needs.info.outputs.package }}
+          VERSION: ${{ needs.info.outputs.version }}
+          DIST_TAG: ${{ needs.info.outputs.dist-tag }}
+        run: |
+          node tools/release.mjs notes "$GITHUB_REF_NAME" > notes.md
+          gh release create "$GITHUB_REF_NAME" --title "$PACKAGE $VERSION" --notes-file notes.md \
+            $([ "$DIST_TAG" = next ] && echo --prerelease)

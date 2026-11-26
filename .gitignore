@@ -8,7 +8,13 @@ desktop.ini
 .idea/
 *.swp
 
-# Node (si un outillage est ajouté plus tard)
+# Node
 node_modules/
 *.log
 *.tgz
+
+# Tests
+test-results/
+playwright-report/
+*.source
+_site/

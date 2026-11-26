@@ -22,6 +22,11 @@
     "vscode.html-custom-data.json",
     "README.fr.md"
   ],
+  "scripts": {
+    "analyze": "cem analyze --config ../../custom-elements-manifest.config.mjs",
+    "prepack": "npm run analyze && node ../../tools/pack.mjs prepack",
+    "postpack": "node ../../tools/pack.mjs postpack"
+  },
   "keywords": [
     "web-component",
     "custom-element",
@@ -35,12 +40,13 @@
   ],
   "author": "Chantraine.net",
   "license": "MIT",
-  "homepage": "https://slone.github.io/gc-toggle-switch/",
+  "homepage": "https://github.com/slone/gc-components/tree/main/packages/gc-toggle-switch#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/slone/gc-toggle-switch.git"
+    "url": "git+https://github.com/slone/gc-components.git",
+    "directory": "packages/gc-toggle-switch"
   },
   "bugs": {
-    "url": "https://github.com/slone/gc-toggle-switch/issues"
+    "url": "https://github.com/slone/gc-components/issues"
   }
 }

@@ -16,34 +16,18 @@
           "valueSet": "v"
         },
         {
-          "name": "busy",
-          "description": "Shows a spinner, exposes aria-busy and ignores user actions.",
-          "valueSet": "v"
-        },
-        {
           "name": "required",
           "description": "The form is invalid while the switch is off.",
           "valueSet": "v"
-        },
-        {
-          "name": "name",
-          "description": "Field name in the form."
         },
         {
           "name": "value",
           "description": "Value submitted when the switch is on."
         },
         {
-          "name": "orientation",
-          "description": "Orientation. Wins over --switch-vertical; horizontal when neither is set.",
-          "values": [
-            {
-              "name": "horizontal"
-            },
-            {
-              "name": "vertical"
-            }
-          ]
+          "name": "busy",
+          "description": "Shows a spinner, exposes aria-busy and ignores user actions.",
+          "valueSet": "v"
         },
         {
           "name": "off-color",
@@ -57,12 +41,28 @@
           "name": "state-labels",
           "description": "Shows I / O state indicators in the track.",
           "valueSet": "v"
+        },
+        {
+          "name": "name",
+          "description": "Field name in the form."
+        },
+        {
+          "name": "orientation",
+          "description": "Orientation. Wins over --switch-vertical; horizontal when neither is set.",
+          "values": [
+            {
+              "name": "horizontal"
+            },
+            {
+              "name": "vertical"
+            }
+          ]
         }
       ],
       "references": [
         {
           "name": "Documentation",
-          "url": "https://github.com/slone/gc-toggle-switch#readme"
+          "url": "https://github.com/slone/gc-components/tree/main/packages/gc-toggle-switch#readme"
         }
       ]
     }

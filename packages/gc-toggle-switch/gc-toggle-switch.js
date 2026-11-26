@@ -10,6 +10,10 @@
  * See README.md for the full documentation.
  */
 
+import { FormControlMixin, internals, sync, isDisabled, applyValidity } from '../gc-base/form-control.js';
+import { upgradeProperties, setState } from '../gc-base/attributes.js';
+import { createMessages } from '../gc-base/messages.js';
+
 const STYLES = /* css */ `
 :host {
   /* ---- Public API (can be overridden from the page) ----
@@ -248,35 +252,86 @@ const DRAG_THRESHOLD = 4;
 /** After a drag, the browser may still send a click: ignore it for this long (ms). */
 const CLICK_SUPPRESS_MS = 400;
 
-function defaultValueMissingMessage(el) {
-  const lang = (el.closest('[lang]')?.getAttribute('lang') || navigator.language || '').toLowerCase();
-  return lang.startsWith('fr') ? 'Veuillez activer cet interrupteur.' : 'Please turn this switch on.';
-}
+const messages = createMessages({
+  en: { valueMissing: 'Please turn this switch on.' },
+  fr: { valueMissing: 'Veuillez activer cet interrupteur.' },
+});
 
-export class ToggleSwitch extends HTMLElement {
-  static formAssociated = true;
+/**
+ * An on/off switch, horizontal or vertical, usable with a pointer (click or drag) and the keyboard (Space, Enter).
+ *
+ * @tag gc-toggle-switch
+ * @summary Accessible, form-associated toggle switch.
+ *
+ * @attr {boolean} checked - The "on" state (reflected). Also sets the default state used by form.reset().
+ * @attr {boolean} disabled - Disables the switch and excludes it from the form.
+ * @attr {boolean} busy - Shows a spinner, exposes aria-busy and ignores user actions.
+ * @attr {boolean} required - The form is invalid while the switch is off.
+ * @attr {string} name - Field name in the form.
+ * @attr {string} value - Value submitted when the switch is on.
+ * @attr {'horizontal' | 'vertical'} orientation - Orientation. Wins over --switch-vertical; horizontal when neither is set.
+ * @attr {string} off-color - Track colour when off (any CSS colour). Wins over --switch-off-color.
+ * @attr {string} on-color - Track colour when on (any CSS colour). Wins over --switch-on-color.
+ * @attr {boolean} state-labels - Shows I / O state indicators in the track.
+ *
+ * @fires {Event} input - The user toggled the switch. Bubbles and is composed.
+ * @fires {Event} change - Fired right after input. Bubbles.
+ * @fires {CustomEvent<{ oldChecked: boolean; newChecked: boolean }>} toggle - Fired right after change, with the old and new states. Does not bubble.
+ *
+ * @slot on - Indicator shown when on (short text or icon).
+ * @slot off - Indicator shown when off (short text or icon).
+ *
+ * @csspart track - The track (rounded background).
+ * @csspart thumb - The round thumb.
+ * @csspart on-label - The indicator shown when on.
+ * @csspart off-label - The indicator shown when off.
+ *
+ * @cssprop [--switch-off-color=light-dark(#767676, #8e8e93)] - Track colour when off.
+ * @cssprop [--switch-on-color=light-dark(#1a7f37, #2ea043)] - Track colour when on.
+ * @cssprop [--switch-thumb-color=#ffffff] - Thumb colour.
+ * @cssprop [--switch-thumb-shadow=0 1px 3px rgb(0 0 0 / 0.35), 0 0 0 0.5px rgb(0 0 0 / 0.08)] - Thumb shadow.
+ * @cssprop [--switch-thumb-size=1.25em] - Thumb diameter.
+ * @cssprop [--switch-padding=0.1875em] - Gap between the thumb and the track edge.
+ * @cssprop [--switch-length=1.65 × the track width] - Track length (long side).
+ * @cssprop [--switch-focus-color=light-dark(#0b57d0, #a8c7fa)] - Focus ring colour.
+ * @cssprop [--switch-label-color=#ffffff] - State indicator colour.
+ * @cssprop [--switch-halo-color=light-dark(rgb(0 0 0 / 0.1), rgb(255 255 255 / 0.18))] - Halo around the thumb on hover and press.
+ * @cssprop [--switch-duration=180ms] - Animation duration.
+ * @cssprop [--switch-vertical=0] - 0 = horizontal, 1 = vertical. The orientation attribute wins.
+ *
+ * @cssstate checked - The switch is on.
+ */
+export class ToggleSwitch extends FormControlMixin(HTMLElement) {
   static observedAttributes = [
     'checked', 'disabled', 'required', 'value', 'busy', 'off-color', 'on-color', 'state-labels',
   ];
 
-  #internals;
+  /**
+   * Adds or overrides the built-in messages for a language, e.g.
+   * `ToggleSwitch.registerMessages('de', { valueMissing: 'Bitte einschalten.' })`.
+   * The language comes from the closest `lang` attribute, else the browser.
+   * @param {string} lang
+   * @param {{ valueMissing?: string }} entries
+   */
+  static registerMessages(lang, entries) {
+    messages.register(lang, entries);
+  }
+
   #track;
   #thumb;
   #attrSheet;
   #checked = false;
   #defaultChecked = false;
   #reflecting = false;
-  #formDisabled = false;
   #managedTabindex = false;
   #spacePressed = false;
-  #customValidity = '';
   #drag = null;
   #internalClick = false;
   #suppressClickUntil = 0;
+  #labelClick = null;
 
   constructor() {
     super();
-    this.#internals = this.attachInternals();
     const root = this.attachShadow({ mode: 'open' });
     this.#attrSheet = new CSSStyleSheet();
     root.adoptedStyleSheets = [getSheet(), this.#attrSheet];
@@ -293,7 +348,7 @@ export class ToggleSwitch extends HTMLElement {
       slot.addEventListener('slotchange', () => this.#updateLabels());
     }
 
-    this.#internals.role = 'switch';
+    this[internals].role = 'switch';
 
     this.addEventListener('click', this.#onClick);
     this.addEventListener('keydown', this.#onKeyDown);
@@ -302,9 +357,6 @@ export class ToggleSwitch extends HTMLElement {
       this.#spacePressed = false;
       this.#track.classList.remove('pressed');
     });
-    // Form submission validates without calling our methods: refresh the message
-    // when the browser reports this element as invalid.
-    this.addEventListener('invalid', () => this.#sync());
     this.addEventListener('pointerdown', this.#onPointerDown);
     this.addEventListener('pointermove', this.#onPointerMove);
     this.addEventListener('pointerup', this.#onPointerUp);
@@ -312,16 +364,9 @@ export class ToggleSwitch extends HTMLElement {
   }
 
   connectedCallback() {
-    // Properties set before the element was defined (upgrade).
-    for (const prop of ['checked', 'defaultChecked', 'disabled', 'required', 'name', 'value', 'orientation', 'stateLabels', 'busy']) {
-      if (Object.prototype.hasOwnProperty.call(this, prop)) {
-        const v = this[prop];
-        delete this[prop];
-        this[prop] = v;
-      }
-    }
+    upgradeProperties(this, ['checked', 'defaultChecked', 'disabled', 'required', 'name', 'value', 'orientation', 'stateLabels', 'busy']);
     this.#updateLabels();
-    this.#sync();
+    this[sync]();
   }
 
   attributeChangedCallback(name, _old, value) {
@@ -338,15 +383,10 @@ export class ToggleSwitch extends HTMLElement {
       this.#updateLabels();
       return;
     }
-    this.#sync();
+    this[sync]();
   }
 
   // ---- Forms ----------------------------------------------------------------
-
-  formDisabledCallback(disabled) {
-    this.#formDisabled = disabled;
-    this.#sync();
-  }
 
   formResetCallback() {
     this.#setChecked(this.#defaultChecked);
@@ -358,27 +398,35 @@ export class ToggleSwitch extends HTMLElement {
 
   // ---- Properties -----------------------------------------------------------
 
+  /** Current state. Setting it fires no event.
+   * @type {boolean}
+   * @default false
+   * @reflect */
   get checked() { return this.#checked; }
   set checked(v) { this.#setChecked(Boolean(v)); }
 
+  /** State restored by form.reset().
+   * @type {boolean}
+   * @default false */
   get defaultChecked() { return this.#defaultChecked; }
   set defaultChecked(v) { this.#defaultChecked = Boolean(v); }
 
-  get disabled() { return this.hasAttribute('disabled'); }
-  set disabled(v) { this.toggleAttribute('disabled', Boolean(v)); }
-
-  get required() { return this.hasAttribute('required'); }
-  set required(v) { this.toggleAttribute('required', Boolean(v)); }
-
+  /** @type {boolean}
+   * @default false
+   * @reflect */
   get busy() { return this.hasAttribute('busy'); }
   set busy(v) { this.toggleAttribute('busy', Boolean(v)); }
 
-  get name() { return this.getAttribute('name') ?? ''; }
-  set name(v) { this.setAttribute('name', v); }
-
+  /** @type {string}
+   * @default "on"
+   * @reflect */
   get value() { return this.getAttribute('value') ?? 'on'; }
   set value(v) { this.setAttribute('value', v); }
 
+  /** Orientation set by the attribute; an orientation set in CSS is not visible here.
+   * @type {'horizontal' | 'vertical'}
+   * @default "horizontal"
+   * @reflect */
   get orientation() {
     return (this.getAttribute('orientation') || '').toLowerCase() === 'vertical' ? 'vertical' : 'horizontal';
   }
@@ -387,25 +435,20 @@ export class ToggleSwitch extends HTMLElement {
     else this.setAttribute('orientation', v);
   }
 
+  /** @type {boolean}
+   * @default false
+   * @reflect */
   get stateLabels() { return this.hasAttribute('state-labels'); }
   set stateLabels(v) { this.toggleAttribute('state-labels', Boolean(v)); }
 
+  /** @type {'gc-toggle-switch'} */
   get type() { return 'gc-toggle-switch'; }
-  get form() { return this.#internals.form; }
-  get labels() { return this.#internals.labels; }
-  get validity() { return this.#internals.validity; }
-  get validationMessage() { this.#sync(); return this.#internals.validationMessage; }
-  get willValidate() { return this.#internals.willValidate; }
 
-  // The built-in message follows the current page language: refresh it before validating.
-  checkValidity() { this.#sync(); return this.#internals.checkValidity(); }
-  reportValidity() { this.#sync(); return this.#internals.reportValidity(); }
-  setCustomValidity(message) {
-    this.#customValidity = String(message ?? '');
-    this.#sync();
-  }
-
-  /** Toggles the state (or forces it when `force` is a boolean). Fires no event. */
+  /**
+   * Toggles the state, or sets it when force is a boolean. Fires no event.
+   * @param {boolean} [force]
+   * @returns {boolean} - The new state.
+   */
   toggle(force) {
     this.checked = typeof force === 'boolean' ? force : !this.#checked;
     return this.#checked;
@@ -413,13 +456,9 @@ export class ToggleSwitch extends HTMLElement {
 
   // ---- Internals ------------------------------------------------------------
 
-  #isDisabled() {
-    return this.hasAttribute('disabled') || this.#formDisabled;
-  }
-
   /** The user can change the state: neither disabled nor busy. */
   #isInteractive() {
-    return !this.#isDisabled() && !this.hasAttribute('busy');
+    return !this[isDisabled]() && !this.hasAttribute('busy');
   }
 
   #setChecked(v) {
@@ -427,7 +466,7 @@ export class ToggleSwitch extends HTMLElement {
     this.#reflecting = true;
     this.toggleAttribute('checked', v);
     this.#reflecting = false;
-    this.#sync();
+    this[sync]();
   }
 
   /** Dispatches a click from the component itself (keyboard, end of a drag). */
@@ -437,8 +476,18 @@ export class ToggleSwitch extends HTMLElement {
   }
 
   #onClick = (event) => {
-    const swallowed = !this.#internalClick && performance.now() < this.#suppressClickUntil;
-    if (swallowed) this.#suppressClickUntil = 0;
+    // Firefox: a click on a switch nested in a <label> reaches the label, whose
+    // activation behaviour sends a second click to the switch, which would toggle
+    // it straight back. Swallow that second click (same task as the first one).
+    // It also follows our own click (keyboard, end of a drag), and is then sent
+    // while #internalClick is still set: do not exempt internal clicks here.
+    const echo = this.#labelClick !== null && event !== this.#labelClick;
+    const swallowed = echo || (!this.#internalClick && performance.now() < this.#suppressClickUntil);
+    if (swallowed && !echo) this.#suppressClickUntil = 0;
+    if (!swallowed && this.parentElement?.closest('label')) {
+      this.#labelClick = event;
+      setTimeout(() => { if (this.#labelClick === event) this.#labelClick = null; }, 0);
+    }
     if (swallowed || !this.#isInteractive()) {
       event.preventDefault();
       event.stopImmediatePropagation();
@@ -567,30 +616,19 @@ export class ToggleSwitch extends HTMLElement {
     this.#attrSheet.replaceSync(decls.length ? `:host { ${decls.join(' ')} }` : '');
   }
 
-  #sync() {
-    const internals = this.#internals;
+  [sync]() {
+    const i = this[internals];
     const checked = this.#checked;
-    const disabled = this.#isDisabled();
+    const disabled = this[isDisabled]();
 
-    internals.ariaChecked = String(checked);
-    internals.ariaDisabled = disabled ? 'true' : null;
-    internals.ariaRequired = this.required ? 'true' : null;
-    internals.ariaBusy = this.busy ? 'true' : null;
+    i.ariaChecked = String(checked);
+    i.ariaDisabled = disabled ? 'true' : null;
+    i.ariaRequired = this.required ? 'true' : null;
+    i.ariaBusy = this.busy ? 'true' : null;
+    setState(i, 'checked', checked);
 
-    try {
-      if (checked) internals.states.add('checked');
-      else internals.states.delete('checked');
-    } catch { /* CustomStateSet not supported */ }
-
-    internals.setFormValue(checked ? this.value : null, String(checked));
-
-    if (this.#customValidity) {
-      internals.setValidity({ customError: true }, this.#customValidity, this.#track);
-    } else if (this.required && !checked) {
-      internals.setValidity({ valueMissing: true }, defaultValueMissingMessage(this), this.#track);
-    } else {
-      internals.setValidity({});
-    }
+    i.setFormValue(checked ? this.value : null, String(checked));
+    this[applyValidity](this.required && !checked, messages.get(this, 'valueMissing'), this.#track);
 
     if (!this.isConnected) return;
     if (disabled) {
