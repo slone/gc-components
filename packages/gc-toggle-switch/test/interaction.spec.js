@@ -236,7 +236,7 @@ test.describe('events', () => {
     await sw.evaluate(async (el) => {
       el.checked = true;
       el.value = 'yes';
-      await import('/gc-toggle-switch.js');
+      await import('/packages/gc-toggle-switch/gc-toggle-switch.js');
     });
     expect(await isChecked(sw)).toBe(true);
     await expect(sw).toHaveAttribute('checked', '');

@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
-import { test, expect, internals, ORIGIN } from './fixtures.js';
+import { test, expect, internals } from './fixtures.js';
 
 const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 
@@ -114,9 +114,9 @@ test.describe('axe', () => {
     expect(results.violations).toEqual([]);
   });
 
-  test('no WCAG violation on the demo page', async ({ page }) => {
+  test('no WCAG violation on the demo page', async ({ page, pkgUrl }) => {
     for (const lang of ['en', 'fr']) {
-      await page.goto(`${ORIGIN}/demo.html?lang=${lang}`);
+      await page.goto(`${pkgUrl}demo.html?lang=${lang}`);
       await page.evaluate(() => customElements.whenDefined('gc-toggle-switch'));
       const results = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze();
       expect(results.violations, `demo.html?lang=${lang}`).toEqual([]);

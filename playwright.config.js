@@ -1,7 +1,10 @@
 import { defineConfig, devices } from '@playwright/test';
 
+// Tests of every package: packages/<name>/test/*.spec.js.
+// Run one package with `npx playwright test packages/gc-toggle-switch`.
 export default defineConfig({
-  testDir: './tests',
+  testDir: './packages',
+  testMatch: '*/test/**/*.spec.js',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
