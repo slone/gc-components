@@ -1,6 +1,6 @@
 {
   "name": "gc-toggle-switch",
-  "version": "1.4.1",
+  "version": "1.5.0",
   "description": "Accessible toggle switch: a native, dependency-free, form-associated Custom Element.",
   "type": "module",
   "main": "gc-toggle-switch.js",
